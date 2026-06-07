@@ -108,9 +108,11 @@ app.whenReady().then(() => {
   if (trayIcon.isEmpty()) {
     trayIcon = nativeImage.createEmpty();
     trayIcon.resize({width: 16, height: 16});
+    tray = new Tray(trayIcon);
+    tray.setTitle('✂️ Snippets');
+  } else {
+    tray = new Tray(trayIcon);
   }
-
-  tray = new Tray(trayIcon);
   
   const updateTrayMenu = () => {
     const loginSettings = app.getLoginItemSettings();
