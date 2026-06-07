@@ -1,7 +1,6 @@
 import { app, BrowserWindow, globalShortcut, Menu, ipcMain } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import isDev from 'electron-is-dev';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -22,6 +21,8 @@ function createWindow() {
       contextIsolation: false,
     },
   });
+
+  const isDev = !app.isPackaged;
 
   if (isDev) {
     mainWindow.loadURL('http://localhost:5173');

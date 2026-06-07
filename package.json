@@ -9,16 +9,14 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "pack:mac": "npm run build && electron-builder --mac"
+    "pack:mac": "npm run build && npx electron-builder --mac"
   },
   "build": {
     "appId": "com.ashparsh.macsnippets",
     "productName": "MacSnippets",
     "mac": {
       "category": "public.app-category.productivity",
-      "target": [
-        "dmg"
-      ]
+      "target": ["dmg"]
     },
     "directories": {
       "output": "release"
