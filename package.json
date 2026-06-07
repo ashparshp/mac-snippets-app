@@ -16,7 +16,9 @@
     "productName": "MacSnippets",
     "mac": {
       "category": "public.app-category.productivity",
-      "target": ["dmg"]
+      "target": [
+        "dmg"
+      ]
     },
     "directories": {
       "output": "release"
@@ -42,6 +44,7 @@
     "concurrently": "^10.0.3",
     "cross-env": "^10.1.0",
     "electron": "^42.3.3",
+    "electron-builder": "^26.15.0",
     "electron-is-dev": "^3.0.1",
     "eslint": "^10.3.0",
     "eslint-plugin-react-hooks": "^7.1.1",
