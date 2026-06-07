@@ -8,7 +8,24 @@
     "dev": "concurrently \"vite\" \"cross-env NODE_ENV=development electron .\"",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "pack:mac": "npm run build && electron-builder --mac"
+  },
+  "build": {
+    "appId": "com.ashparsh.macsnippets",
+    "productName": "MacSnippets",
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": ["dmg"]
+    },
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "main.js",
+      "package.json"
+    ]
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.0",
