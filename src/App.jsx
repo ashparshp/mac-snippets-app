@@ -7,7 +7,8 @@ import {
   Copy,
   Check,
   Hash,
-  MessageSquare
+  MessageSquare,
+  Settings
 } from 'lucide-react';
 
 export default function App() {
@@ -45,8 +46,17 @@ export default function App() {
   const [copiedId, setCopiedId] = useState(null);
 
   // New states for keyboard navigation
-  const [activePane, setActivePane] = useState('folders'); // 'folders' | 'snippets'
+  const [activePane, setActivePane] = useState('folders'); // 'folders' | 'snippets' | 'settings'
   const [selectedSnippetId, setSelectedSnippetId] = useState(null);
+  const [globalShortcut, setGlobalShortcut] = useState('CommandOrControl+K');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.require) {
+      window.require('electron').ipcRenderer.invoke('get-shortcut').then(sc => {
+        if (sc) setGlobalShortcut(sc);
+      });
+    }
+  }, []);
 
   const searchInputRef = useRef(null);
   const editInputRef = useRef(null);
@@ -317,6 +327,20 @@ export default function App() {
               </div>
             ))}
           </div>
+
+          <div className="p-3 border-t border-white/5">
+            <button 
+              onClick={() => setActivePane('settings')}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${
+                activePane === 'settings' 
+                  ? 'bg-indigo-500/20 text-indigo-200 ring-1 ring-indigo-500/30' 
+                  : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
+              }`}
+            >
+              <Settings size={16} />
+              <span className="text-[13px] font-medium">Settings</span>
+            </button>
+          </div>
         </div>
 
         {/* Right Main View */}
@@ -339,9 +363,55 @@ export default function App() {
             />
           </div>
 
-          {/* Snippet List */}
-          <div className="flex-1 overflow-y-auto scrollbar-thin p-4 space-y-3">
-            {filteredSnippets.length === 0 ? (
+          {activePane === 'settings' ? (
+            <div className="flex-1 flex flex-col items-center justify-center p-8 overflow-y-auto scrollbar-thin">
+              <div className="max-w-sm w-full bg-white/[0.02] border border-white/5 rounded-2xl p-6 shadow-xl">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-2 bg-indigo-500/20 rounded-lg text-indigo-400">
+                    <Settings size={20} />
+                  </div>
+                  <h2 className="text-lg font-semibold text-slate-200">App Settings</h2>
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Global Shortcut</label>
+                  <input 
+                    type="text" 
+                    value={globalShortcut.replace('CommandOrControl', 'Cmd/Ctrl')}
+                    readOnly
+                    onKeyDown={(e) => {
+                      e.preventDefault();
+                      const keys = [];
+                      if (e.metaKey) keys.push('CommandOrControl');
+                      else if (e.ctrlKey) keys.push('CommandOrControl'); // Map Ctrl to CmdOrCtrl
+                      if (e.altKey) keys.push('Alt');
+                      if (e.shiftKey) keys.push('Shift');
+                      
+                      if (!['Meta', 'Control', 'Alt', 'Shift'].includes(e.key)) {
+                        let key = e.key.toUpperCase();
+                        if (key === ' ') key = 'Space';
+                        keys.push(key);
+                        const newShortcut = keys.join('+');
+                        setGlobalShortcut(newShortcut);
+                        if (typeof window !== 'undefined' && window.require) {
+                          window.require('electron').ipcRenderer.invoke('set-shortcut', newShortcut);
+                        }
+                      }
+                    }}
+                    placeholder="Press key combination..."
+                    className="w-full bg-black/40 border border-indigo-500/30 rounded-xl p-4 text-indigo-300 outline-none focus:ring-2 focus:ring-indigo-500/50 text-center font-mono tracking-widest text-lg cursor-pointer transition-all shadow-inner"
+                  />
+                  <p className="text-[11px] text-slate-500 mt-3 text-center leading-relaxed">
+                    Click the box above and press your desired key combination to change the global shortcut.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Snippet List */}
+              <div className="flex-1 overflow-y-auto scrollbar-thin p-4 space-y-3">
+                {filteredSnippets.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-slate-500">
                 <MessageSquare size={48} className="mb-4 opacity-20" />
                 <p className="text-sm">No snippets found in this folder.</p>
@@ -400,6 +470,8 @@ export default function App() {
               />
             </div>
           </div>
+          </>
+          )}
 
         </div>
       </div>
