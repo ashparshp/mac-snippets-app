@@ -16,7 +16,8 @@
     "productName": "MacSnippets",
     "mac": {
       "category": "public.app-category.productivity",
-      "target": ["dmg"]
+      "target": ["dmg"],
+      "icon": "build/icon.png"
     },
     "directories": {
       "output": "release"
