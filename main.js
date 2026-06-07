@@ -1,4 +1,4 @@
-import { app, BrowserWindow, globalShortcut, Menu, ipcMain } from 'electron';
+import { app, BrowserWindow, globalShortcut, Menu, ipcMain, Tray, nativeImage } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -6,6 +6,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 let mainWindow;
+let tray = null;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -41,6 +42,17 @@ function createWindow() {
   });
 }
 
+function toggleWindow() {
+  if (mainWindow) {
+    if (mainWindow.isVisible()) {
+      mainWindow.hide();
+    } else {
+      mainWindow.show();
+      mainWindow.focus();
+    }
+  }
+}
+
 app.whenReady().then(() => {
   app.dock.hide();
 
@@ -63,21 +75,51 @@ app.whenReady().then(() => {
 
   createWindow();
 
+  // Create Tray
+  const iconPath = path.join(__dirname, 'build', 'icon.png');
+  let trayIcon = nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 });
+  
+  // If icon is missing in dev mode, use an empty image to prevent crashing
+  if (trayIcon.isEmpty()) {
+    trayIcon = nativeImage.createEmpty();
+    trayIcon.resize({width: 16, height: 16});
+  }
+
+  tray = new Tray(trayIcon);
+  
+  const updateTrayMenu = () => {
+    const loginSettings = app.getLoginItemSettings();
+    const contextMenu = Menu.buildFromTemplate([
+      { label: 'Open Snippets (Cmd+K)', click: toggleWindow },
+      { type: 'separator' },
+      { 
+        label: 'Launch at Login', 
+        type: 'checkbox', 
+        checked: loginSettings.openAtLogin,
+        click: (item) => {
+          app.setLoginItemSettings({
+            openAtLogin: item.checked,
+            openAsHidden: true
+          });
+        }
+      },
+      { type: 'separator' },
+      { label: 'Quit MacSnippets', click: () => {
+        app.quit();
+      }}
+    ]);
+    tray.setToolTip('MacSnippets');
+    tray.setContextMenu(contextMenu);
+  };
+  
+  updateTrayMenu();
+
   ipcMain.on('hide-window', () => {
     if (mainWindow) mainWindow.hide();
   });
 
   // Register a global shortcut 'CommandOrControl+K'
-  globalShortcut.register('CommandOrControl+K', () => {
-    if (mainWindow) {
-      if (mainWindow.isVisible()) {
-        mainWindow.hide();
-      } else {
-        mainWindow.show();
-        mainWindow.focus();
-      }
-    }
-  });
+  globalShortcut.register('CommandOrControl+K', toggleWindow);
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
