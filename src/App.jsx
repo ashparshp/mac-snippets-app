@@ -1,28 +1,47 @@
 import { useState, useRef, useEffect } from 'react';
-import { 
-  Folder, 
-  FolderPlus, 
-  Target, 
-  Search, 
-  Copy, 
-  Check, 
-  Hash, 
+import {
+  Folder,
+  FolderPlus,
+  Target,
+  Search,
+  Copy,
+  Check,
+  Hash,
   MessageSquare
 } from 'lucide-react';
 
 export default function App() {
-  const [folders, setFolders] = useState([]);
-  const [snippets, setSnippets] = useState([]);
+  const [folders, setFolders] = useState(() => {
+    try {
+      const saved = localStorage.getItem('mac-snippets-folders');
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
+
+  const [snippets, setSnippets] = useState(() => {
+    try {
+      const saved = localStorage.getItem('mac-snippets-data');
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('mac-snippets-folders', JSON.stringify(folders));
+  }, [folders]);
+
+  useEffect(() => {
+    localStorage.setItem('mac-snippets-data', JSON.stringify(snippets));
+  }, [snippets]);
 
   const [activeFolderId, setActiveFolderId] = useState(null);
   const [captureTargetId, setCaptureTargetId] = useState(null);
-  
+
   const [searchQuery, setSearchQuery] = useState('');
   const [inputText, setInputText] = useState('');
-  
+
   const [editingFolderId, setEditingFolderId] = useState(null);
   const [editingFolderName, setEditingFolderName] = useState('');
-  
+
   const [copiedId, setCopiedId] = useState(null);
 
   // New states for keyboard navigation
@@ -138,11 +157,11 @@ export default function App() {
 
     const interval = setInterval(() => {
       if (!electronClipboard) return;
-      
+
       const currentText = electronClipboard.readText();
       if (currentText && currentText !== lastClipboardText.current) {
         lastClipboardText.current = currentText;
-        
+
         const newSnippet = {
           id: Date.now().toString(),
           folderId: captureTargetId,
@@ -226,24 +245,24 @@ export default function App() {
 
   return (
     <div className="w-screen h-screen flex p-4 select-none">
-      <div className="flex w-full h-full bg-slate-900/80 backdrop-blur-2xl rounded-2xl border border-white/10 overflow-hidden text-slate-200 shadow-2xl">
-        
+      <div className="flex w-full h-full bg-[#0a0a0c]/60 backdrop-blur-3xl rounded-2xl border border-white/10 overflow-hidden text-slate-200 shadow-2xl">
+
         {/* Left Sidebar */}
-        <div className="w-64 bg-black/20 border-r border-white/5 flex flex-col">
+        <div className="w-64 bg-black/30 border-r border-white/5 flex flex-col">
           <div className="p-4 flex items-center justify-between border-b border-white/5">
-            <h2 className="text-sm font-semibold text-slate-300 tracking-wider uppercase">Folders</h2>
-            <button 
+            <h2 className="text-[11px] font-bold text-slate-400 tracking-widest uppercase">Folders</h2>
+            <button
               onClick={handleAddFolder}
-              className="text-slate-400 hover:text-white transition-colors p-1 rounded-md hover:bg-white/10"
+              className="text-slate-400 hover:text-white transition-all hover:scale-110 active:scale-95 p-1 rounded-md hover:bg-white/10"
               title="Add Folder"
             >
               <FolderPlus size={16} />
             </button>
           </div>
-          
+
           <div className="flex-1 overflow-y-auto scrollbar-thin p-2 space-y-1">
             {folders.map(folder => (
-              <div 
+              <div
                 key={folder.id}
                 onClick={() => {
                   if (editingFolderId !== folder.id) {
@@ -256,16 +275,15 @@ export default function App() {
                   setEditingFolderId(folder.id);
                   setEditingFolderName(folder.name);
                 }}
-                className={`group flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-colors ${
-                  activeFolderId === folder.id 
-                    ? activePane === 'folders'
-                      ? 'bg-blue-500/30 text-blue-100 ring-1 ring-blue-500/50 shadow-sm'
-                      : 'bg-blue-500/10 text-blue-300'
-                    : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
-                }`}
+                className={`group flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-all duration-200 ${activeFolderId === folder.id
+                  ? activePane === 'folders'
+                    ? 'bg-gradient-to-r from-indigo-500/20 to-violet-500/20 text-indigo-100 ring-1 ring-indigo-500/40 shadow-[0_0_15px_rgba(99,102,241,0.15)]'
+                    : 'bg-indigo-500/10 text-indigo-300'
+                  : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
+                  }`}
               >
                 <div className="flex items-center gap-3 overflow-hidden">
-                  <Folder size={16} className={activeFolderId === folder.id ? 'text-blue-400' : 'text-slate-500'} />
+                  <Folder size={16} className={activeFolderId === folder.id ? 'text-indigo-400' : 'text-slate-500'} />
                   {editingFolderId === folder.id ? (
                     <input
                       ref={editInputRef}
@@ -275,13 +293,13 @@ export default function App() {
                       onBlur={saveFolderRename}
                       onClick={(e) => e.stopPropagation()}
                       onDoubleClick={(e) => e.stopPropagation()}
-                      className="bg-black/40 text-white px-2 py-0.5 rounded text-sm w-full outline-none focus:ring-1 focus:ring-blue-500 select-text"
+                      className="bg-black/40 text-white px-2 py-0.5 rounded text-sm w-full outline-none focus:ring-1 focus:ring-indigo-500 select-text"
                     />
                   ) : (
-                    <span className="text-sm truncate">{folder.name}</span>
+                    <span className="text-[13px] font-medium truncate">{folder.name}</span>
                   )}
                 </div>
-                
+
                 {/* Capture Session Toggle */}
                 {!editingFolderId && (
                   <button
@@ -289,9 +307,8 @@ export default function App() {
                       e.stopPropagation();
                       setCaptureTargetId(captureTargetId === folder.id ? null : folder.id);
                     }}
-                    className={`opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md ${
-                      captureTargetId === folder.id ? 'opacity-100 text-red-400 hover:text-red-300' : 'text-slate-500 hover:text-slate-300'
-                    }`}
+                    className={`opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md ${captureTargetId === folder.id ? 'opacity-100 text-red-400 hover:text-red-300' : 'text-slate-500 hover:text-slate-300'
+                      }`}
                     title="Set as Capture Session target"
                   >
                     <Target size={14} className={captureTargetId === folder.id ? 'fill-red-400/20' : ''} />
@@ -303,11 +320,11 @@ export default function App() {
         </div>
 
         {/* Right Main View */}
-        <div 
+        <div
           className="flex-1 flex flex-col min-w-0"
           onClick={() => setActivePane('snippets')}
         >
-          
+
           {/* Top Bar: Search */}
           <div className="p-4 border-b border-white/5 flex items-center gap-3 bg-white/[0.02]">
             <Search size={18} className="text-slate-500" />
@@ -331,23 +348,23 @@ export default function App() {
               </div>
             ) : (
               filteredSnippets.map(snippet => (
-                <div 
-                  key={snippet.id} 
+                <div
+                  key={snippet.id}
                   onClick={(e) => {
                     e.stopPropagation();
                     setActivePane('snippets');
                     setSelectedSnippetId(snippet.id);
+                    copyToClipboard(snippet.id, snippet.content);
                   }}
-                  className={`group relative border rounded-xl p-4 transition-all cursor-pointer ${
-                    selectedSnippetId === snippet.id && activePane === 'snippets'
-                      ? 'bg-blue-500/20 border-blue-500/50 shadow-sm'
-                      : 'bg-white/5 hover:bg-white/10 border-white/5'
-                  }`}
+                  className={`group relative border rounded-xl p-4 transition-all duration-300 cursor-pointer ${selectedSnippetId === snippet.id && activePane === 'snippets'
+                    ? 'bg-gradient-to-br from-indigo-500/10 to-violet-500/10 border-indigo-500/30 shadow-[0_4px_20px_rgba(99,102,241,0.1)] scale-[1.01]'
+                    : 'bg-white/[0.02] hover:bg-white/[0.04] border-white/[0.05]'
+                    }`}
                 >
-                  <p className="text-sm whitespace-pre-wrap font-mono text-slate-300 select-text leading-relaxed">
+                  <p className="text-[13px] whitespace-pre-wrap font-mono text-slate-300 select-text leading-relaxed">
                     {snippet.content}
                   </p>
-                  
+
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -364,13 +381,6 @@ export default function App() {
                       <Copy size={16} />
                     )}
                   </button>
-                  
-                  {/* Shortcut Hint */}
-                  {selectedSnippetId === snippet.id && activePane === 'snippets' && copiedId !== snippet.id && (
-                    <div className="absolute bottom-3 right-3 opacity-50 text-xs text-slate-400">
-                      Press 'C' to copy
-                    </div>
-                  )}
                 </div>
               ))
             )}
@@ -385,7 +395,7 @@ export default function App() {
                 onKeyDown={handleInputKeyDown}
                 placeholder={targetFolder ? `Save to "${targetFolder.name}"... (Press Enter to save, Shift+Enter for new line)` : "Create a folder first to save snippets..."}
                 disabled={!targetFolder}
-                className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm text-slate-200 placeholder-slate-500 outline-none focus:border-blue-500/50 focus:bg-white/10 transition-all resize-none scrollbar-thin select-text"
+                className="w-full bg-white/[0.03] border border-white/5 rounded-xl py-3 px-4 text-sm text-slate-200 placeholder-slate-500 outline-none focus:border-indigo-500/40 focus:bg-white/[0.06] transition-all resize-none scrollbar-thin select-text shadow-inner"
                 rows={3}
               />
             </div>
