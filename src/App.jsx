@@ -364,7 +364,10 @@ export default function App() {
           </div>
 
           {activePane === 'settings' ? (
-            <div className="flex-1 flex flex-col items-center justify-center p-8 overflow-y-auto scrollbar-thin">
+            <div 
+              className="flex-1 flex flex-col items-center justify-center p-8 overflow-y-auto scrollbar-thin"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="max-w-sm w-full bg-white/[0.02] border border-white/5 rounded-2xl p-6 shadow-xl">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="p-2 bg-indigo-500/20 rounded-lg text-indigo-400">
